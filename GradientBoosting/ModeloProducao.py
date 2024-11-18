@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import joblib  # Import para salvar e carregar o modelo
 
 # Carregar os dados
 df_binary = pd.read_csv('diabetes_binary_health_indicators_BRFSS2015.csv')
@@ -58,6 +59,18 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 gb_clf = GradientBoostingClassifier(learning_rate=0.05, max_depth=4, n_estimators=300, subsample=1.0, random_state=42)
 gb_clf.fit(X_train, y_train)
 
+# Salvar o modelo treinado
+joblib.dump(gb_clf, 'gradient_boosting_model.pkl')
+
+# Carregar o modelo salvo em outro lugar
+loaded_model = joblib.load('gradient_boosting_model.pkl')
+
+# Fazer previsões com o modelo carregado
+predictions = loaded_model.predict(X_test)
+
+# Avaliar o modelo
+print("Acurácia no conjunto de teste:", accuracy_score(y_test, predictions))
+print("Relatório de classificação:\n", classification_report(y_test, predictions))
 
 # Função para prever diabetes (produção)
 def predict_diabetes(input_data):
@@ -83,7 +96,7 @@ def predict_diabetes(input_data):
     input_data = input_data[X_train.columns]
 
     # Fazer a previsão
-    predictions = gb_clf.predict(input_data)
+    predictions = loaded_model.predict(input_data)  # Usando o modelo carregado
     return predictions
 
 
@@ -91,18 +104,17 @@ def predict_diabetes(input_data):
 # Exemplo de um novo paciente
 new_patient = pd.DataFrame({
     'HighBP': [0],
-    'HighChol': [0],
+    'HighChol': [1],
     'CholCheck': [0],
     'BMI': [45.0],
     'MentHlth': [15],
     'PhysHlth': [30],
     'DiffWalk': [1],
     'Sex': [0],
-    'Age': [9],
+    'Age': [47],
     'Education': [2],
     'Income': [3]
 })
-
 # Prever para o novo paciente
 prediction = predict_diabetes(new_patient)
 print("Predição para novo paciente (0 = Não diabético, 1 = Diabético):", prediction)
