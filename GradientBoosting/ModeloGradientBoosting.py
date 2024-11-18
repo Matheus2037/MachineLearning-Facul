@@ -77,23 +77,26 @@ else:
 
 # Função para preparar os dados do paciente para previsão
 def prepare_patient_data(input_data, X_train_columns):
-    # Processar o input_data no mesmo formato dos dados de treino
+    # Processar as colunas do paciente
     input_data['BMI_Category'] = input_data['BMI'].apply(categorize_bmi)
     input_data = pd.get_dummies(input_data, columns=['BMI_Category'], prefix='BMI', drop_first=True)
 
-    # Garantir que todas as colunas do treino estão no input_data
-    for col in X_train_columns:
-        if col not in input_data.columns:
-            input_data[col] = 0
-
-    # Criar as colunas de interação e grupo de BMI
-    input_data['BMI_Age_Interaction'] = input_data['BMI'] * input_data['Age']
+    # Criar a coluna de grupo de BMI
     input_data['BMI_Group'] = input_data['BMI'].apply(simple_bmi_grouping)
 
-    # Ordenar as colunas para corresponder ao X_train
+    # Criar a coluna de interação entre BMI e idade
+    input_data['BMI_Age_Interaction'] = input_data['BMI'] * input_data['Age']
+
+    # Garantir que todas as colunas do X_train estejam presentes
+    for col in X_train_columns:
+        if col not in input_data.columns:
+            input_data[col] = 0  # Adicionar coluna ausente com valor 0
+
+    # Garantir que as colunas estejam na mesma ordem que no X_train
     input_data = input_data[X_train_columns]
 
     return input_data
+
 
 # Exemplo de um novo paciente (dados fornecidos)
 new_patient = pd.DataFrame({
@@ -110,20 +113,23 @@ new_patient = pd.DataFrame({
     'Income': [1]
 })
 
-# Carregar X_train para obter as colunas que o modelo espera
-# (Isso deve ser feito com base nos dados usados para treinar o modelo)
+# Garantir que as colunas do modelo de treino (X_train) sejam carregadas corretamente
 columns_to_remove = ['PhysActivity', 'Fruits', 'Veggies', 'AnyHealthcare', 'NoDocbcCost', 'Smoker']
 X = df_binary.drop(columns=columns_to_remove + ['Diabetes_binary'])
 X['BMI_Category'] = X['BMI'].apply(categorize_bmi)
 X = pd.get_dummies(X, columns=['BMI_Category'], prefix='BMI', drop_first=True)
+X['BMI_Group'] = X['BMI'].apply(simple_bmi_grouping)
+X['BMI_Age_Interaction'] = X['BMI'] * X['Age']
+X_train_columns = X.columns  # Colunas do conjunto de treino
 
-# Prepare os dados do novo paciente
-X_train_columns = X.columns  # Colunas que o modelo espera
+# Processar o novo paciente
 prepared_patient = prepare_patient_data(new_patient, X_train_columns)
 
 # Fazer a previsão para o novo paciente
 if 'loaded_model' in globals():
     prediction = loaded_model.predict(prepared_patient)
     print("\nPredição para novo paciente (0 = Não diabético, 1 = Diabético):", prediction)
+    proba = loaded_model.predict_proba(prepared_patient)
+    print("Probabilidade (classe 0.0, classe 1.0):", proba)
 else:
     print("Modelo não carregado. A previsão não pode ser feita.")
