@@ -98,23 +98,47 @@ def prepare_patient_data(input_data, X_train_columns):
     return input_data
 
 
-# Exemplo de um novo paciente (dados fornecidos)
-new_patient = pd.DataFrame({
-    'HighBP': [1],
-    'HighChol': [1],
-    'CholCheck': [1],
-    'BMI': [30.0],
-    'MentHlth': [30.0],
-    'PhysHlth': [30.0],
-    'DiffWalk': [1],
-    'Sex': [0],
-    'Age': [9],  # Faixa etária (70-74 anos)
-    'Education': [5],
-    'Income': [1]
-})
+# Solicitar ao usuário se deseja preencher manualmente os dados
+def get_patient_data():
+    print("\nPor favor, insira os dados do paciente:")
+    return {
+        'HighBP': [int(input("Pressão alta (0 = Não, 1 = Sim): "))],
+        'HighChol': [int(input("Colesterol alto (0 = Não, 1 = Sim): "))],
+        'CholCheck': [int(input("Fez exame de colesterol (0 = Não, 1 = Sim): "))],
+        'BMI': [float(input("IMC (exemplo: 27.5): "))],
+        'MentHlth': [float(input("Dias de saúde mental ruim nos últimos 30 dias: "))],
+        'PhysHlth': [float(input("Dias de saúde física ruim nos últimos 30 dias: "))],
+        'DiffWalk': [int(input("Dificuldade para caminhar (0 = Não, 1 = Sim): "))],
+        'Sex': [int(input("Sexo (0 = Feminino, 1 = Masculino): "))],
+        'Age': [int(input("Faixa etária (0-13): "))],
+        'Education': [int(input("Nível de escolaridade (1-6): "))],
+        'Income': [int(input("Faixa de renda (1-8): "))]
+    }
+
+
+# Coletar os dados do paciente manualmente ou usar exemplo
+use_manual_input = input("Deseja preencher os dados manualmente? (s/n): ").strip().lower()
+
+if use_manual_input == 's':
+    patient_data = get_patient_data()
+else:
+    patient_data = {
+        'HighBP': [1],
+        'HighChol': [1],
+        'CholCheck': [1],
+        'BMI': [30.0],
+        'MentHlth': [30.0],
+        'PhysHlth': [30.0],
+        'DiffWalk': [1],
+        'Sex': [0],
+        'Age': [9],
+        'Education': [5],
+        'Income': [1]
+    }
+
+new_patient = pd.DataFrame(patient_data)
 
 # Garantir que as colunas do modelo de treino (X_train) sejam carregadas corretamente
-columns_to_remove = ['PhysActivity', 'Fruits', 'Veggies', 'AnyHealthcare', 'NoDocbcCost', 'Smoker']
 X = df_binary.drop(columns=columns_to_remove + ['Diabetes_binary'])
 X['BMI_Category'] = X['BMI'].apply(categorize_bmi)
 X = pd.get_dummies(X, columns=['BMI_Category'], prefix='BMI', drop_first=True)
